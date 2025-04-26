@@ -1,13 +1,18 @@
-# Model/system parameters (example values)
-batch_size = 32             # batch size
-sequence_len = 1024         # total sequence length
-embedding_dim = 4096        # embedding dimension
-precision = 2               # bytes per element (e.g., FP16)
+# formulas derived from KVPR paper
 
-# Hardware characteristics (example values)
-v_gpu = 312e12   # FLOPs/sec (A100 FP16 peak ~312 TFLOPS)
-v_com = 32e9     # PCIe bandwidth in bytes/sec
+"""
+s: sequence length
+h: embedding dimension
+p: precision
+v_gpu: GPU processing speed
+v_com: data transmission speed
+"""
+def compute_analytical_split(s, h, p, v_gpu, v_com):
+    return (s * p * v_gpu) / (2 * h * v_com + p * v_gpu)
 
-# calculate optimal recomputation/load split
-l = (sequence_len * precision * v_gpu) / (2 * embedding_dim * v_com + precision * v_gpu)
-print("Optimal split point l* =", round(l))
+def main():
+    l = compute_analytical_split(1024, 4096, 2, 312e12, 32e9)
+    print("Optimal split point l* =", round(l))
+
+if __name__ == "__main__":
+    main()
