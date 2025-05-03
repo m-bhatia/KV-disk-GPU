@@ -64,11 +64,17 @@ class HNSWRetrievalEngine(RetrievalEngine):
             self.num_elements = self.sentence_embeddings.shape[0]
             self.index = hnswlib.Index(space="cosine", dim=self.dim)
             # self.index.init_index(max_elements=self.num_elements, ef_construction=100, M=16)
-            self.index.init_index(ef_construction=100, M=16)
+            self.max_elements = kwargs.get("max_elements", self.num_elements)
+            self.index.init_index(max_elements=self.max_elements, ef_construction=100, M=16)
             self.index.add_items(self.sentence_embeddings)
             self.index.set_ef(self.ef)
             if self.index_path:
                 self.save_index(self.index_path)
+    
+    def add_item(self, item):
+        embedding = self.embedding_service.create_embeddings([item])
+        self.sentences.append(item)
+        self.index.add_items(embedding)
 
     def save_index(self, index_path):
         super().save_index(index_path)
@@ -92,10 +98,3 @@ class HNSWRetrievalEngine(RetrievalEngine):
         labels, distances = self.index.knn_query(query_embedding, k=self.k)
         logging.info(f"Query labels: {labels}, distances: {distances}")
         return [self.sentences[label] for label in labels[0]]
-
-
-
-
-
-
-
